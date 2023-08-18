@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lottery Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            padding: 50px;
+        }
+        #simulateButton {
+            margin-top: 20px;
+        }
+        #results {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        label {
+            display: inline-block;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lottery Simulator</h1>
+        <label for="prizeInput">Prize to Modify:</label>
+        <select id="prizeInput">
+            <option value="徽章">徽章</option>
+            <option value="钥匙扣">钥匙扣</option>
+            <option value="小镜子">小镜子</option>
+            <option value="CE杯子">CE杯子</option>
+            <option value="杯垫">杯垫</option>
+            <option value="文件夹">文件夹</option>
+            <option value="FYE包">FYE包</option>
+            <option value="风筝">风筝</option>
+        </select>
+        <label for="quantityInput">New Quantity:</label>
+        <input type="number" id="quantityInput" value="0">
+        <button id="updateButton">Update</button>
+        <div id="results"></div>
+        <button id="simulateButton">Simulate</button>
+    </div>
+    
+    <script>
+        // Define the initial prizes and their quantities
+        let prizes = {
+            "徽章": 23,
+            "钥匙扣": 10,
+            "小镜子": 65,
+            "CE杯子": 4,
+            "杯垫": 6,
+            "文件夹": 5,
+            "FYE包": 3,
+            "风筝": 2
+        };
+
+        // Create possibilities
+        let total = Object.values(prizes).reduce((sum, quantity) => sum + quantity, 0);
+        let prizesPossibilities = Object.fromEntries(
+            Object.entries(prizes).map(([prize, quantity]) => [prize, quantity / total])
+        );
+
+        // Function to simulate drawing the lottery
+        function drawLottery(prizes) {
+            const randomNumber = Math.random();
+            let cumulativeProb = 0;
+
+            for (const [prize, probability] of Object.entries(prizes)) {
+                cumulativeProb += probability;
+                if (randomNumber <= cumulativeProb) {
+                    return prize;
+                }
+            }
+        }
+
+        // Get DOM elements
+        const simulateButton = document.getElementById("simulateButton");
+        const resultsDiv = document.getElementById("results");
+        const updateButton = document.getElementById("updateButton");
+        const prizeInput = document.getElementById("prizeInput");
+        const quantityInput = document.getElementById("quantityInput");
+
+        // Display remaining quantities and probabilities
+        function displayResults(prizes) {
+            let resultsHTML = "<h2>Current Prize Remaining:</h2>";
+            for (const [prize, quantity] of Object.entries(prizes)) {
+                const probability = (quantity / total) * 100;
+                resultsHTML += `<p>${prize}: ${quantity} remaining (${probability.toFixed(2)}%)</p>`;
+            }
+            resultsDiv.innerHTML = resultsHTML;
+        }
+
+        // Attach click event to the simulate button
+        simulateButton.addEventListener("click", () => {
+            const winner = drawLottery(prizesPossibilities);
+            alert(`The winner is: ${winner}`);
+            prizes[winner]--; // Decrement the remaining quantity
+            total--;
+            // Update probabilities
+            for (const [prize, quantity] of Object.entries(prizes)) {
+                prizesPossibilities[prize] = quantity / total;
+            }
+            displayResults(prizes);
+        });
+
+        // Attach click event to the update button
+        updateButton.addEventListener("click", () => {
+            const selectedPrize = prizeInput.value;
+            const newQuantity = parseInt(quantityInput.value);
+
+            if (!isNaN(newQuantity)) {
+                total -= prizes[selectedPrize] - newQuantity;
+                prizes[selectedPrize] = newQuantity;
+                for (const [prize, quantity] of Object.entries(prizes)) {
+                    prizesPossibilities[prize] = quantity / total;
+                }
+                displayResults(prizes);
+            }
+        });
+
+        // Initial display of remaining quantities and probabilities
+        displayResults(prizes);
+    </script>
+</body>
+</html>
