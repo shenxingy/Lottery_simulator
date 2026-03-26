@@ -69,13 +69,17 @@
         function drawLottery(prizes) {
             const randomNumber = Math.random();
             let cumulativeProb = 0;
+            let lastPrize = null;
 
             for (const [prize, probability] of Object.entries(prizes)) {
                 cumulativeProb += probability;
+                lastPrize = prize;
                 if (randomNumber <= cumulativeProb) {
                     return prize;
                 }
             }
+            // Fallback for floating-point edge case where cumulative < 1.0
+            return lastPrize;
         }
 
         // Get DOM elements
@@ -97,13 +101,19 @@
 
         // Attach click event to the simulate button
         simulateButton.addEventListener("click", () => {
+            if (total <= 0) {
+                alert("No prizes remaining!");
+                return;
+            }
             const winner = drawLottery(prizesPossibilities);
             alert(`The winner is: ${winner}`);
             prizes[winner]--; // Decrement the remaining quantity
             total--;
             // Update probabilities
-            for (const [prize, quantity] of Object.entries(prizes)) {
-                prizesPossibilities[prize] = quantity / total;
+            if (total > 0) {
+                for (const [prize, quantity] of Object.entries(prizes)) {
+                    prizesPossibilities[prize] = quantity / total;
+                }
             }
             displayResults(prizes);
         });
@@ -113,11 +123,14 @@
             const selectedPrize = prizeInput.value;
             const newQuantity = parseInt(quantityInput.value);
 
-            if (!isNaN(newQuantity)) {
+            if (!isNaN(newQuantity) && newQuantity >= 0) {
                 total -= prizes[selectedPrize] - newQuantity;
                 prizes[selectedPrize] = newQuantity;
-                for (const [prize, quantity] of Object.entries(prizes)) {
-                    prizesPossibilities[prize] = quantity / total;
+                // Guard against total reaching zero
+                if (total > 0) {
+                    for (const [prize, quantity] of Object.entries(prizes)) {
+                        prizesPossibilities[prize] = quantity / total;
+                    }
                 }
                 displayResults(prizes);
             }
